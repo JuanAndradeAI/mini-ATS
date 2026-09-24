@@ -10,11 +10,12 @@
 
 ## Phase 2 — Database and authentication
 
-- [ ] Create database schema
-- [ ] Create customers table
-- [ ] Create profiles table
-- [ ] Create jobs table
-- [ ] Create candidates table
+- [X] Create database schema
+- [X] Create customers table
+- [X] Create profiles table
+- [X] Create jobs table
+- [X] Create candidates table
+- [X] Create applications table
 - [ ] Configure Row Level Security
 - [ ] Implement login
 - [ ] Implement logout
