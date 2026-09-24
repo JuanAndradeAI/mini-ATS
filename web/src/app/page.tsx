@@ -1,69 +1,126 @@
-import Image from "next/image";
+"use client";
+
+// useState lets this page remember values that change while the user
+// interacts with it, such as the email, password, loading state and errors.
+import { useState } from "react";
+
+// Imports the Supabase client that we configured in src/lib/supabase.ts.
+import { supabase } from "@/lib/supabase";
 
 export default function Home() {
+  // Stores what the user types in the email field.
+  const [email, setEmail] = useState("");
+
+  // Stores what the user types in the password field.
+  const [password, setPassword] = useState("");
+
+  // Stores an error message if the login fails.
+  const [error, setError] = useState("");
+
+  // Keeps track of whether a login request is currently running.
+  const [loading, setLoading] = useState(false);
+
+  // Runs when the user submits the login form.
+  async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
+    // Prevents the browser from refreshing the page when the form is submitted.
+    event.preventDefault();
+
+    // Clears any previous error and marks the login request as running.
+    setError("");
+    setLoading(true);
+
+    // Sends the email and password to Supabase Authentication.
+    const { error: loginError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    // If Supabase rejects the login, show the error to the user.
+    if (loginError) {
+      setError(loginError.message);
+      setLoading(false);
+      return;
+    }
+
+    // For now, confirm that authentication worked.
+    // Later this will redirect the user to the ATS dashboard.
+    alert("Login successful!");
+
+    setLoading(false);
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    // Centers the login card on the page.
+    <main className="flex min-h-screen items-center justify-center bg-zinc-100 px-4">
+      <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-md">
+        {/* Application title and short description. */}
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-zinc-900">Mini ATS</h1>
+
+          <p className="mt-2 text-sm text-zinc-600">
+            Sign in to manage jobs and candidates
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+
+        {/* Submitting this form calls handleLogin(). */}
+        <form onSubmit={handleLogin} className="space-y-5">
+          <div>
+            <label
+              htmlFor="email"
+              className="mb-2 block text-sm font-medium text-zinc-700"
+            >
+              Email
+            </label>
+
+            <input
+              id="email"
+              type="email"
+              value={email}
+              // Saves every change made in the input into the email state.
+              onChange={(event) => setEmail(event.target.value)}
+              required
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 outline-none focus:border-zinc-500"
+              placeholder="you@example.com"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+
+          <div>
+            <label
+              htmlFor="password"
+              className="mb-2 block text-sm font-medium text-zinc-700"
+            >
+              Password
+            </label>
+
+            <input
+              id="password"
+              type="password"
+              value={password}
+              // Saves every change made in the input into the password state.
+              onChange={(event) => setPassword(event.target.value)}
+              required
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 outline-none focus:border-zinc-500"
+              placeholder="Enter your password"
+            />
+          </div>
+
+          {/* Only appears when Supabase returns a login error. */}
+          {error && (
+            <p className="text-sm text-red-600">
+              {error}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            {/* Changes the button text while Supabase is processing the login. */}
+            {loading ? "Signing in..." : "Log in"}
+          </button>
+        </form>
+      </div>
+    </main>
   );
 }

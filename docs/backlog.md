@@ -17,7 +17,7 @@
 - [X] Create candidates table
 - [X] Create applications table
 - [X] Configure Row Level Security
-- [ ] Implement login
+- [X] Implement login
 - [ ] Implement logout
 
 ## Phase 3 — Core customer workflow
