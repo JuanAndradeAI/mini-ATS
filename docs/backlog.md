@@ -16,7 +16,7 @@
 - [X] Create jobs table
 - [X] Create candidates table
 - [X] Create applications table
-- [ ] Configure Row Level Security
+- [X] Configure Row Level Security
 - [ ] Implement login
 - [ ] Implement logout
 
