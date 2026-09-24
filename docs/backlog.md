@@ -4,9 +4,9 @@
 
 - [X] Initialize Next.js application with TypeScript and Tailwind CSS
 - [X] Verify application runs locally
-- [ ] Create Supabase project
-- [ ] Connect Next.js to Supabase
-- [ ] Configure environment variables
+- [X] Create Supabase project
+- [X] Connect Next.js to Supabase
+- [X] Configure environment variables
 
 ## Phase 2 — Database and authentication
 
