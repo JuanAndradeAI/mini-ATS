@@ -1,0 +1,73 @@
+# Name displayed for this workflow in GitHub Actions.
+name: CI
+
+# Defines when this workflow should run.
+on:
+  # Run the workflow whenever a Pull Request targets main.
+  pull_request:
+    branches:
+      - main
+
+# A workflow can contain one or more jobs.
+jobs:
+  # "check" is the name we give to this job.
+  check:
+    # GitHub creates a temporary Ubuntu machine for this job.
+    runs-on: ubuntu-latest
+
+    # The commands/actions below run in order from top to bottom.
+    steps:
+
+      # Step 1:
+      # Downloads the repository code into the temporary machine.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2:
+      # Prepares Node.js so the machine can run npm commands.
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Node.js version used by the CI environment.
+          node-version: 20
+
+          # Enables npm dependency caching to make future runs faster.
+          cache: npm
+
+          # Our package-lock.json is inside the web folder,
+          # not at the root of the repository.
+          cache-dependency-path: web/package-lock.json
+
+      # Step 3:
+      # Installs exactly the dependency versions recorded
+      # in package-lock.json.
+      #
+      # "working-directory" is needed because the Next.js
+      # application lives inside /web.
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci
+
+      # Step 4:
+      # Runs ESLint to detect code-quality and syntax problems.
+      - name: Run lint
+        working-directory: web
+        run: npm run lint
+
+      # Step 5:
+      # Builds the production version of the Next.js application.
+      # This also helps detect compilation and TypeScript problems
+      # that could prevent the application from being deployed.
+      - name: Build application
+        working-directory: web
+
+        # These are the Supabase public configuration values used
+        # by the Next.js application during the build.
+        #
+        # The real values will be stored in GitHub Secrets instead
+        # of being written directly in this file.
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+
+        run: npm run build
