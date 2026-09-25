@@ -2,10 +2,13 @@
 
 // useState lets this page remember values that change while the user
 // interacts with it, such as the email, password, loading state and errors.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // Imports the Supabase client that we configured in src/lib/supabase.ts.
 import { supabase } from "@/lib/supabase";
+
+// Session is the Supabase type that represents an authenticated user session.
+import type { Session } from "@supabase/supabase-js";
 
 export default function Home() {
   // Stores what the user types in the email field.
@@ -20,6 +23,18 @@ export default function Home() {
   // Keeps track of whether a login request is currently running.
   const [loading, setLoading] = useState(false);
 
+  // Stores the current authenticated Supabase session.
+  // If there is no logged-in user, the value is null.
+  const [session, setSession] = useState<Session | null>(null);
+
+  // Checks whether Supabase already has an authenticated user
+  // when the application loads.
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+    });
+  }, []);
+
   // Runs when the user submits the login form.
   async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
     // Prevents the browser from refreshing the page when the form is submitted.
@@ -29,8 +44,10 @@ export default function Home() {
     setError("");
     setLoading(true);
 
-    // Sends the email and password to Supabase Authentication.
-    const { error: loginError } = await supabase.auth.signInWithPassword({
+  
+  // Sends the credentials to Supabase and receives the session
+  // created when the login is successful.
+  const { data, error: loginError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -42,12 +59,47 @@ export default function Home() {
       return;
     }
 
-    // For now, confirm that authentication worked.
-    // Later this will redirect the user to the ATS dashboard.
-    alert("Login successful!");
+    // Saves the authenticated session returned by Supabase.
+    setSession(data.session);
 
     setLoading(false);
   }
+
+    // Signs out the currently authenticated user.
+    async function handleLogout() {
+      await supabase.auth.signOut();
+
+      // Clears the session stored in the page.
+      setSession(null);
+    }
+
+// If there is an authenticated session, show the logged-in view
+// instead of showing the login form again.
+if (session) {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-zinc-100 px-4">
+      <div className="w-full max-w-md rounded-xl bg-white p-8 text-center shadow-md">
+        <h1 className="text-3xl font-bold text-zinc-900">
+          Mini ATS
+        </h1>
+
+        <p className="mt-4 text-sm text-zinc-600">
+          You are signed in as
+        </p>
+
+        <p className="mt-1 font-medium text-zinc-900">
+          {session.user.email}
+        </p>
+        <button
+          onClick={handleLogout}
+          className="mt-6 w-full rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-700"
+        >
+          Log out
+        </button>
+      </div>
+    </main>
+  );
+}
 
   return (
     // Centers the login card on the page.
