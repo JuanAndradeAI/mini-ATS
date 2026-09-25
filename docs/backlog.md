@@ -22,7 +22,7 @@
 
 ## Phase 3 — Core customer workflow
 
-- [ ] Create job
+- [X] Create job
 - [ ] View jobs
 - [ ] Add candidate
 - [ ] View candidates
