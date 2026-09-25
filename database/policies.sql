@@ -19,6 +19,15 @@ ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE candidates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
 
+-- ============================================================
+-- TABLE PRIVILEGES
+-- Allows authenticated users to access application tables.
+-- RLS policies below still determine which rows they can access.
+-- ============================================================
+
+GRANT SELECT ON TABLE public.profiles TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.jobs TO authenticated;
+
 
 -- ============================================================
 -- 2. SECURITY HELPER FUNCTIONS

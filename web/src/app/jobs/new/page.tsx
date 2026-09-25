@@ -10,18 +10,82 @@ export default function NewJobPage() {
 
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [customerId, setCustomerId] = useState<string | null>(null);
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) {
-        router.replace("/login");
-        return;
-      }
+    async function loadUserData() {
+    const { data: sessionData } = await supabase.auth.getSession();
 
-      setSession(data.session);
-      setLoading(false);
+    if (!sessionData.session) {
+      router.replace("/login");
+      return;
+    }
+
+    setSession(sessionData.session);
+
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("customer_id")
+      .eq("id", sessionData.session.user.id)
+      .single();
+
+    if (profileError) {
+        console.error("Profile error details:", {
+        message: profileError.message,
+        details: profileError.details,
+        hint: profileError.hint,
+        code: profileError.code,
+        userId: sessionData.session.user.id,
     });
-  }, [router]);
+
+    setLoading(false);
+    return;
+}
+
+    setCustomerId(profile.customer_id);
+    setLoading(false);
+  }
+
+  loadUserData();
+}, [router]);
+
+async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  e.preventDefault();
+
+  if (!customerId) {
+    setError("No customer is associated with this user.");
+    return;
+  }
+
+  setSubmitting(true);
+  setError("");
+
+const { error: insertError } = await supabase
+  .from("jobs")
+  .insert({
+  customer_id: customerId,
+  title: title.trim(),
+  description: description.trim() || null,
+    });
+
+if (insertError) {
+  console.error("Error creating job:", insertError);
+  setError(insertError.message);
+  setSubmitting(false);
+  return;
+  }
+
+  setTitle("");
+  setDescription("");
+  setSubmitting(false);
+
+  alert("Job created successfully");
+}
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-zinc-100 px-4">
@@ -34,7 +98,7 @@ export default function NewJobPage() {
           Add a new job position
         </p>
 
-        <form className="mt-8 space-y-5">
+        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
           <div>
             <label
               htmlFor="title"
@@ -47,6 +111,8 @@ export default function NewJobPage() {
               id="title"
               type="text"
               required
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 outline-none focus:border-zinc-500"
               placeholder="Software Engineer"
             />
@@ -63,16 +129,25 @@ export default function NewJobPage() {
             <textarea
               id="description"
               rows={5}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 outline-none focus:border-zinc-500"
               placeholder="Describe the position..."
             />
           </div>
 
+          {error && (
+            <p className="text-sm text-red-600">
+              {error}
+            </p>
+          )}
+
           <button
             type="submit"
-            className="w-full rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-700"
+            disabled={submitting}
+            className="w-full rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Create job
+            {submitting ? "Creating..." : "Create job"}
           </button>
         </form>
       </div>
