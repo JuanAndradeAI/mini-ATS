@@ -129,6 +129,12 @@ export default function KanbanPage() {
   const [selectedJob, setSelectedJob] = useState<string>("all");
 
   // ============================================================
+ // CANDIDATE NAME SEARCH STATE
+ // ============================================================
+ 
+ const [candidateSearch, setCandidateSearch] = useState("");
+
+  // ============================================================
   // DRAG & DROP STATE
   // ============================================================
 
@@ -270,21 +276,76 @@ export default function KanbanPage() {
   ).sort((a, b) => a.localeCompare(b));
 
   // ============================================================
-  // FILTERED APPLICATIONS
-  // ============================================================
-  //
-  // The original applications state remains untouched.
-  //
-  // The Kanban only renders this filtered collection.
-  // This means filtering does NOT modify Supabase data.
-  // ============================================================
+// FILTERED APPLICATIONS
+// ============================================================
+//
+// The original applications state remains untouched.
+//
+// The Kanban only renders this filtered collection.
+//
+// We apply TWO independent filters:
+//
+// 1. Job filter
+// 2. Candidate name search
+//
+// This means filtering does NOT modify Supabase data.
+// It only changes which applications are displayed.
+//
+// ============================================================
 
-  const filteredApplications =
-    selectedJob === "all"
-      ? applications
-      : applications.filter(
-          (application) => application.job_title === selectedJob
-        );
+const normalizedCandidateSearch = candidateSearch
+  .trim()
+  .toLowerCase();
+
+const filteredApplications = applications.filter(
+  (application) => {
+    // --------------------------------------------------------
+    // JOB FILTER
+    // --------------------------------------------------------
+    //
+    // If "all" is selected, every job is allowed.
+    // Otherwise, the application must belong to the
+    // selected job.
+    // --------------------------------------------------------
+
+    const matchesJob =
+      selectedJob === "all" ||
+      application.job_title === selectedJob;
+
+    // --------------------------------------------------------
+    // CANDIDATE NAME SEARCH
+    // --------------------------------------------------------
+    //
+    // Combine first name + last name into one searchable
+    // string.
+    //
+    // Example:
+    //
+    // first_name = "Daniel"
+    // last_name  = "Garcia"
+    //
+    // searchableCandidateName = "daniel garcia"
+    //
+    // Converting everything to lowercase makes the search
+    // case-insensitive.
+    // --------------------------------------------------------
+
+    const searchableCandidateName =
+      `${application.first_name} ${application.last_name}`.toLowerCase();
+
+    // If the search field is empty, every candidate matches.
+    //
+    // Otherwise, check whether the candidate's full name
+    // contains the text entered by the user.
+
+    const matchesCandidate =
+      normalizedCandidateSearch === "" ||
+      searchableCandidateName.includes(
+        normalizedCandidateSearch
+      );
+    return matchesJob && matchesCandidate;
+  }
+);
 
   // ============================================================
   // UPDATE APPLICATION STAGE
@@ -514,52 +575,88 @@ export default function KanbanPage() {
         )}
 
         {/* ====================================================
-            JOB FILTER
+        FILTERS
         ==================================================== */}
 
         {!error && (
-          <div className="mt-8 flex items-end gap-4">
+        <div className="mt-8 flex flex-wrap items-end gap-4">
+
+            {/* ==================================================
+                JOB FILTER
+            ================================================== */}
+
             <div className="w-full max-w-xs">
-              <label
+            <label
                 htmlFor="job-filter"
                 className="mb-2 block text-sm font-medium text-zinc-700"
-              >
+            >
                 Filter by job
-              </label>
+            </label>
 
-              <select
+            <select
                 id="job-filter"
                 value={selectedJob}
                 onChange={(event) =>
-                  setSelectedJob(event.target.value)
+                setSelectedJob(event.target.value)
                 }
                 className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm font-medium text-zinc-900 shadow-sm outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
-              >
+            >
                 <option value="all">
-                  All jobs
+                All jobs
                 </option>
 
                 {jobTitles.map((jobTitle) => (
-                  <option
+                <option
                     key={jobTitle}
                     value={jobTitle}
-                  >
+                >
                     {jobTitle}
-                  </option>
+                </option>
                 ))}
-              </select>
+            </select>
             </div>
 
-            {selectedJob !== "all" && (
-              <button
+            {/* ==================================================
+                CANDIDATE SEARCH
+            ================================================== */}
+
+            <div className="w-full max-w-xs">
+            <label
+                htmlFor="candidate-search"
+                className="mb-2 block text-sm font-medium text-zinc-700"
+            >
+                Search candidate
+            </label>
+
+            <input
+                id="candidate-search"
+                type="search"
+                value={candidateSearch}
+                onChange={(event) =>
+                setCandidateSearch(event.target.value)
+                }
+                placeholder="Search by name..."
+                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 shadow-sm outline-none transition placeholder:text-zinc-400 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
+            />
+            </div>
+
+            {/* ==================================================
+                CLEAR FILTERS
+            ================================================== */}
+
+            {(selectedJob !== "all" || candidateSearch !== "") && (
+            <button
                 type="button"
-                onClick={() => setSelectedJob("all")}
+                onClick={() => {
+                setSelectedJob("all");
+                setCandidateSearch("");
+                }}
                 className="rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50"
-              >
-                Clear filter
-              </button>
+            >
+                Clear filters
+            </button>
             )}
-          </div>
+        </div>
         )}
 
         {/* ====================================================
