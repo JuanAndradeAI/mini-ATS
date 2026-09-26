@@ -30,6 +30,33 @@ GRANT SELECT, INSERT, UPDATE ON TABLE public.jobs TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON TABLE public.candidates TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON TABLE public.applications TO authenticated;
 
+-- ============================================================
+-- SERVICE ROLE PRIVILEGES
+-- Allows trusted server-side administrative operations.
+--
+-- The service role key is only used by the server-side
+-- Supabase admin client and must never be exposed to the browser.
+-- ============================================================
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON TABLE public.customers
+TO service_role;
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON TABLE public.profiles
+TO service_role;
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON TABLE public.jobs
+TO service_role;
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON TABLE public.candidates
+TO service_role;
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON TABLE public.applications
+TO service_role;
 
 -- ============================================================
 -- 2. SECURITY HELPER FUNCTIONS
