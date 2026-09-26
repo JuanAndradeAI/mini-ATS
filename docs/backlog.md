@@ -26,8 +26,8 @@
 - [X] View jobs
 - [X] Add candidate
 - [X] View candidates
-- [ ] Build candidate Kanban board
-- [ ] Move candidate between pipeline stages
+- [X] Build candidate Kanban board
+- [X] Move candidate between pipeline stages
 - [ ] Filter candidates by job
 - [ ] Filter candidates by candidate name
 
