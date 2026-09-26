@@ -128,37 +128,48 @@ export default function CandidatesPage() {
       }
 
 
-      // --------------------------------------------------------
-      // Transform Supabase data
-      // --------------------------------------------------------
-      // Supabase returns nested objects because candidates and
-      // jobs are related to applications.
-      //
-      // We convert that nested structure into a simpler object
-      // that is easier to render in React.
-      // --------------------------------------------------------
+    // --------------------------------------------------------
+    // Transform Supabase data
+    // --------------------------------------------------------
+    // Supabase infers the nested relationships "candidates"
+    // and "jobs" as arrays.
+    //
+    // Because each application belongs to one candidate and
+    // one job, we take the first related record from each array
+    // and convert it into the simpler Candidate structure used
+    // by the UI.
+    // --------------------------------------------------------
 
-      const formattedCandidates: Candidate[] = (data ?? [])
-        // Ignore incomplete applications that do not have
-        // a related candidate or job.
-        .filter(
-          (application) =>
-            application.candidates !== null &&
-            application.jobs !== null
-        )
+    const formattedCandidates: Candidate[] = (data ?? []).flatMap(
+    (application) => {
+        // Get the candidate related to this application.
+        const candidate = application.candidates?.[0];
 
-        // Convert the nested Supabase result into our
-        // Candidate structure.
-        .map((application) => ({
-          id: application.candidates!.id,
-          first_name: application.candidates!.first_name,
-          last_name: application.candidates!.last_name,
-          email: application.candidates!.email,
-          phone: application.candidates!.phone,
-          linkedin_url: application.candidates!.linkedin_url,
-          stage: application.stage,
-          job_title: application.jobs!.title,
-        }));
+        // Get the job related to this application.
+        const job = application.jobs?.[0];
+
+        // If either relationship is missing, ignore this
+        // incomplete application.
+        if (!candidate || !job) {
+        return [];
+        }
+
+        // Convert the Supabase result into the Candidate
+        // structure expected by our React state.
+        return [
+        {
+            id: candidate.id,
+            first_name: candidate.first_name,
+            last_name: candidate.last_name,
+            email: candidate.email,
+            phone: candidate.phone,
+            linkedin_url: candidate.linkedin_url,
+            stage: application.stage,
+            job_title: job.title,
+        },
+        ];
+    }
+    );
 
 
       // Save the candidates in React state.
