@@ -33,8 +33,8 @@
 
 ## Phase 4 — Admin workflow
 
-- [ ] Create customer accounts
-- [ ] Create admin accounts
+- [X] Create customer accounts
+- [X] Create admin accounts
 - [ ] Allow admin to manage customer data
 
 ## Phase 5 — MVP validation
