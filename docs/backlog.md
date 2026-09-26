@@ -24,7 +24,7 @@
 
 - [X] Create job
 - [X] View jobs
-- [ ] Add candidate
+- [X] Add candidate
 - [ ] View candidates
 - [ ] Build candidate Kanban board
 - [ ] Move candidate between pipeline stages

@@ -27,6 +27,8 @@ ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
 
 GRANT SELECT ON TABLE public.profiles TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON TABLE public.jobs TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.candidates TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.applications TO authenticated;
 
 
 -- ============================================================
