@@ -23,7 +23,7 @@
 ## Phase 3 — Core customer workflow
 
 - [X] Create job
-- [ ] View jobs
+- [X] View jobs
 - [ ] Add candidate
 - [ ] View candidates
 - [ ] Build candidate Kanban board
