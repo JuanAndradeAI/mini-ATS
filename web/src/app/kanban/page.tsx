@@ -119,6 +119,16 @@ export default function KanbanPage() {
   const [stageError, setStageError] = useState("");
 
   // ============================================================
+  // JOB FILTER STATE
+  // ============================================================
+  //
+  // "all" means that applications from every job are displayed.
+  // Otherwise this value contains the selected job title.
+  // ============================================================
+
+  const [selectedJob, setSelectedJob] = useState<string>("all");
+
+  // ============================================================
   // DRAG & DROP STATE
   // ============================================================
 
@@ -243,6 +253,38 @@ export default function KanbanPage() {
 
     loadApplications();
   }, [router]);
+
+  // ============================================================
+  // JOB FILTER
+  // ============================================================
+  //
+  // Build a unique list of job titles from the applications
+  // already loaded from Supabase.
+  //
+  // We use Set so the same job is not displayed more than once
+  // in the filter dropdown.
+  // ============================================================
+
+  const jobTitles = Array.from(
+    new Set(applications.map((application) => application.job_title))
+  ).sort((a, b) => a.localeCompare(b));
+
+  // ============================================================
+  // FILTERED APPLICATIONS
+  // ============================================================
+  //
+  // The original applications state remains untouched.
+  //
+  // The Kanban only renders this filtered collection.
+  // This means filtering does NOT modify Supabase data.
+  // ============================================================
+
+  const filteredApplications =
+    selectedJob === "all"
+      ? applications
+      : applications.filter(
+          (application) => application.job_title === selectedJob
+        );
 
   // ============================================================
   // UPDATE APPLICATION STAGE
@@ -472,16 +514,71 @@ export default function KanbanPage() {
         )}
 
         {/* ====================================================
+            JOB FILTER
+        ==================================================== */}
+
+        {!error && (
+          <div className="mt-8 flex items-end gap-4">
+            <div className="w-full max-w-xs">
+              <label
+                htmlFor="job-filter"
+                className="mb-2 block text-sm font-medium text-zinc-700"
+              >
+                Filter by job
+              </label>
+
+              <select
+                id="job-filter"
+                value={selectedJob}
+                onChange={(event) =>
+                  setSelectedJob(event.target.value)
+                }
+                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm font-medium text-zinc-900 shadow-sm outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
+              >
+                <option value="all">
+                  All jobs
+                </option>
+
+                {jobTitles.map((jobTitle) => (
+                  <option
+                    key={jobTitle}
+                    value={jobTitle}
+                  >
+                    {jobTitle}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {selectedJob !== "all" && (
+              <button
+                type="button"
+                onClick={() => setSelectedJob("all")}
+                className="rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50"
+              >
+                Clear filter
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* ====================================================
             KANBAN BOARD
         ==================================================== */}
 
         {!error && (
-          <div className="mt-8 overflow-x-auto pb-4">
+          <div className="mt-6 overflow-x-auto pb-4">
             <div className="grid grid-cols-6 gap-4">
 
               {kanbanColumns.map((column) => {
+                // IMPORTANT:
+                // We filter filteredApplications instead of applications.
+                //
+                // This means each column only counts and displays
+                // candidates belonging to the selected job.
+
                 const columnApplications =
-                  applications.filter(
+                  filteredApplications.filter(
                     (application) =>
                       application.stage === column.id
                   );
@@ -799,8 +896,7 @@ export default function KanbanPage() {
                       </p>
 
                       <p className="mt-1 text-xs text-zinc-500">
-                        Move candidate through the
-                        hiring pipeline
+                        Move candidate through the hiring pipeline
                       </p>
                     </div>
 
