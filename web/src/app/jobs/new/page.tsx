@@ -8,10 +8,12 @@ import type { Session } from "@supabase/supabase-js";
 export default function NewJobPage() {
   const router = useRouter();
 
+// Stores the authenticated session and the customer associated with the user.
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [customerId, setCustomerId] = useState<string | null>(null);
 
+// Stores the form values and submission state.
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -19,8 +21,10 @@ export default function NewJobPage() {
 
   useEffect(() => {
     async function loadUserData() {
+// Check that the user has an active session before allowing access.
     const { data: sessionData } = await supabase.auth.getSession();
 
+// Redirect unauthenticated users to the login page.
     if (!sessionData.session) {
       router.replace("/login");
       return;
@@ -28,12 +32,15 @@ export default function NewJobPage() {
 
     setSession(sessionData.session);
 
+// Load the authenticated user's profile to determine which customer
+// the new job should belong to.
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("customer_id")
       .eq("id", sessionData.session.user.id)
       .single();
 
+    // Stop the initialization process if the profile cannot be loaded.
     if (profileError) {
         console.error("Profile error details:", {
         message: profileError.message,
@@ -47,16 +54,20 @@ export default function NewJobPage() {
     return;
 }
 
+    // Store the customer ID so new jobs can be associated with the correct tenant.
     setCustomerId(profile.customer_id);
     setLoading(false);
   }
 
+  // Load authentication and customer information when the page is initialized.
   loadUserData();
 }, [router]);
 
+// Handles validation and persistence when the job creation form is submitted.
 async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
   e.preventDefault();
 
+  // Prevent creating a job without an associated customer.
   if (!customerId) {
     setError("No customer is associated with this user.");
     return;
@@ -65,6 +76,8 @@ async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
   setSubmitting(true);
   setError("");
 
+// Create the job under the current customer's account.
+// Row Level Security (RLS) provides the database-level authorization check.
 const { error: insertError } = await supabase
   .from("jobs")
   .insert({
@@ -73,6 +86,7 @@ const { error: insertError } = await supabase
   description: description.trim() || null,
     });
 
+// Keep the form data available and display the database error if creation fails.
 if (insertError) {
   console.error("Error creating job:", insertError);
   setError(insertError.message);
@@ -80,6 +94,7 @@ if (insertError) {
   return;
   }
 
+  // Reset the form after the job has been successfully created.
   setTitle("");
   setDescription("");
   setSubmitting(false);
@@ -98,6 +113,7 @@ if (insertError) {
           Add a new job position
         </p>
 
+        {/* Submit the controlled form through the job creation handler. */}
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">
           <div>
             <label
@@ -136,12 +152,14 @@ if (insertError) {
             />
           </div>
 
+          {/* Display any validation or database error returned during creation. */}
           {error && (
             <p className="text-sm text-red-600">
               {error}
             </p>
           )}
 
+          {/* Disable repeated submissions while the insert request is in progress. */}
           <button
             type="submit"
             disabled={submitting}
