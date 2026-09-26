@@ -29,7 +29,7 @@
 - [X] Build candidate Kanban board
 - [X] Move candidate between pipeline stages
 - [X] Filter candidates by job
-- [ ] Filter candidates by candidate name
+- [X] Filter candidates by candidate name
 
 ## Phase 4 — Admin workflow
 
