@@ -54,8 +54,8 @@
 - [X] Allow admin to access customer Kanban boards
 - [X] Allow admin to move candidates between pipeline stages
 - [X] Allow admin to use job and candidate filters
-- [ ] Reuse existing Jobs, Candidates and Kanban functionality
-- [ ] Verify admin can manage customer data without duplicating customer workflow code
+- [X] Reuse existing Jobs, Candidates and Kanban functionality
+- [X] Verify admin can manage customer data without duplicating customer workflow code
 
 ## Phase 5 — Application integration
 
