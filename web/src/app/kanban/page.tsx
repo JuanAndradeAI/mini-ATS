@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -104,7 +104,25 @@ function formatDate(date: string) {
 // PAGE
 // ============================================================
 
+// useSearchParams must be rendered inside a Suspense boundary.
+// The actual Kanban implementation lives inside KanbanContent.
 export default function KanbanPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-zinc-100">
+          <p className="text-zinc-600">
+            Loading candidate pipeline...
+          </p>
+        </main>
+      }
+    >
+      <KanbanContent />
+    </Suspense>
+  );
+}
+
+function KanbanContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -136,10 +154,10 @@ export default function KanbanPage() {
   const [selectedJob, setSelectedJob] = useState<string>("all");
 
   // ============================================================
- // CANDIDATE NAME SEARCH STATE
- // ============================================================
- 
- const [candidateSearch, setCandidateSearch] = useState("");
+  // CANDIDATE NAME SEARCH STATE
+  // ============================================================
+
+  const [candidateSearch, setCandidateSearch] = useState("");
 
   // ============================================================
   // DRAG & DROP STATE
@@ -231,10 +249,11 @@ export default function KanbanPage() {
       // NORMALIZE SUPABASE RESPONSE
       // --------------------------------------------------------
 
-      const rows = (data ?? []) as unknown as SupabaseApplicationRow[];
+      const rows =
+        (data ?? []) as unknown as SupabaseApplicationRow[];
 
-      const formattedApplications: KanbanApplication[] = rows.flatMap(
-        (application) => {
+      const formattedApplications: KanbanApplication[] =
+        rows.flatMap((application) => {
           const candidate = Array.isArray(application.candidates)
             ? application.candidates[0]
             : application.candidates;
@@ -274,8 +293,7 @@ export default function KanbanPage() {
               created_at: application.created_at,
             },
           ];
-        }
-      );
+        });
 
       setApplications(formattedApplications);
       setLoading(false);
@@ -296,80 +314,83 @@ export default function KanbanPage() {
   // ============================================================
 
   const jobTitles = Array.from(
-    new Set(applications.map((application) => application.job_title))
+    new Set(
+      applications.map((application) => application.job_title)
+    )
   ).sort((a, b) => a.localeCompare(b));
 
   // ============================================================
-// FILTERED APPLICATIONS
-// ============================================================
-//
-// The original applications state remains untouched.
-//
-// The Kanban only renders this filtered collection.
-//
-// We apply TWO independent filters:
-//
-// 1. Job filter
-// 2. Candidate name search
-//
-// This means filtering does NOT modify Supabase data.
-// It only changes which applications are displayed.
-//
-// ============================================================
+  // FILTERED APPLICATIONS
+  // ============================================================
+  //
+  // The original applications state remains untouched.
+  //
+  // The Kanban only renders this filtered collection.
+  //
+  // We apply TWO independent filters:
+  //
+  // 1. Job filter
+  // 2. Candidate name search
+  //
+  // This means filtering does NOT modify Supabase data.
+  // It only changes which applications are displayed.
+  //
+  // ============================================================
 
-const normalizedCandidateSearch = candidateSearch
-  .trim()
-  .toLowerCase();
+  const normalizedCandidateSearch = candidateSearch
+    .trim()
+    .toLowerCase();
 
-const filteredApplications = applications.filter(
-  (application) => {
-    // --------------------------------------------------------
-    // JOB FILTER
-    // --------------------------------------------------------
-    //
-    // If "all" is selected, every job is allowed.
-    // Otherwise, the application must belong to the
-    // selected job.
-    // --------------------------------------------------------
+  const filteredApplications = applications.filter(
+    (application) => {
+      // --------------------------------------------------------
+      // JOB FILTER
+      // --------------------------------------------------------
+      //
+      // If "all" is selected, every job is allowed.
+      // Otherwise, the application must belong to the
+      // selected job.
+      // --------------------------------------------------------
 
-    const matchesJob =
-      selectedJob === "all" ||
-      application.job_title === selectedJob;
+      const matchesJob =
+        selectedJob === "all" ||
+        application.job_title === selectedJob;
 
-    // --------------------------------------------------------
-    // CANDIDATE NAME SEARCH
-    // --------------------------------------------------------
-    //
-    // Combine first name + last name into one searchable
-    // string.
-    //
-    // Example:
-    //
-    // first_name = "Daniel"
-    // last_name  = "Garcia"
-    //
-    // searchableCandidateName = "daniel garcia"
-    //
-    // Converting everything to lowercase makes the search
-    // case-insensitive.
-    // --------------------------------------------------------
+      // --------------------------------------------------------
+      // CANDIDATE NAME SEARCH
+      // --------------------------------------------------------
+      //
+      // Combine first name + last name into one searchable
+      // string.
+      //
+      // Example:
+      //
+      // first_name = "Daniel"
+      // last_name  = "Garcia"
+      //
+      // searchableCandidateName = "daniel garcia"
+      //
+      // Converting everything to lowercase makes the search
+      // case-insensitive.
+      // --------------------------------------------------------
 
-    const searchableCandidateName =
-      `${application.first_name} ${application.last_name}`.toLowerCase();
+      const searchableCandidateName =
+        `${application.first_name} ${application.last_name}`.toLowerCase();
 
-    // If the search field is empty, every candidate matches.
-    //
-    // Otherwise, check whether the candidate's full name
-    // contains the text entered by the user.
+      // If the search field is empty, every candidate matches.
+      //
+      // Otherwise, check whether the candidate's full name
+      // contains the text entered by the user.
 
-    const matchesCandidate =
-      normalizedCandidateSearch === "" ||
-      searchableCandidateName.includes(
-        normalizedCandidateSearch
-      );
-    return matchesJob && matchesCandidate;
-  }
-);
+      const matchesCandidate =
+        normalizedCandidateSearch === "" ||
+        searchableCandidateName.includes(
+          normalizedCandidateSearch
+        );
+
+      return matchesJob && matchesCandidate;
+    }
+  );
 
   // ============================================================
   // UPDATE APPLICATION STAGE
@@ -599,45 +620,45 @@ const filteredApplications = applications.filter(
         )}
 
         {/* ====================================================
-        FILTERS
+            FILTERS
         ==================================================== */}
 
         {!error && (
-        <div className="mt-8 flex flex-wrap items-end gap-4">
+          <div className="mt-8 flex flex-wrap items-end gap-4">
 
             {/* ==================================================
                 JOB FILTER
             ================================================== */}
 
             <div className="w-full max-w-xs">
-            <label
+              <label
                 htmlFor="job-filter"
                 className="mb-2 block text-sm font-medium text-zinc-700"
-            >
+              >
                 Filter by job
-            </label>
+              </label>
 
-            <select
+              <select
                 id="job-filter"
                 value={selectedJob}
                 onChange={(event) =>
-                setSelectedJob(event.target.value)
+                  setSelectedJob(event.target.value)
                 }
                 className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm font-medium text-zinc-900 shadow-sm outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
-            >
+              >
                 <option value="all">
-                All jobs
+                  All jobs
                 </option>
 
                 {jobTitles.map((jobTitle) => (
-                <option
+                  <option
                     key={jobTitle}
                     value={jobTitle}
-                >
+                  >
                     {jobTitle}
-                </option>
+                  </option>
                 ))}
-            </select>
+              </select>
             </div>
 
             {/* ==================================================
@@ -645,42 +666,43 @@ const filteredApplications = applications.filter(
             ================================================== */}
 
             <div className="w-full max-w-xs">
-            <label
+              <label
                 htmlFor="candidate-search"
                 className="mb-2 block text-sm font-medium text-zinc-700"
-            >
+              >
                 Search candidate
-            </label>
+              </label>
 
-            <input
+              <input
                 id="candidate-search"
                 type="search"
                 value={candidateSearch}
                 onChange={(event) =>
-                setCandidateSearch(event.target.value)
+                  setCandidateSearch(event.target.value)
                 }
                 placeholder="Search by name..."
                 className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 shadow-sm outline-none transition placeholder:text-zinc-400 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
-            />
+              />
             </div>
 
             {/* ==================================================
                 CLEAR FILTERS
             ================================================== */}
 
-            {(selectedJob !== "all" || candidateSearch !== "") && (
-            <button
+            {(selectedJob !== "all" ||
+              candidateSearch !== "") && (
+              <button
                 type="button"
                 onClick={() => {
-                setSelectedJob("all");
-                setCandidateSearch("");
+                  setSelectedJob("all");
+                  setCandidateSearch("");
                 }}
                 className="rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50"
-            >
+              >
                 Clear filters
-            </button>
+              </button>
             )}
-        </div>
+          </div>
         )}
 
         {/* ====================================================

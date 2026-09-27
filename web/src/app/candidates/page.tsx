@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -70,7 +70,61 @@ type ApplicationRow = {
     | null;
 };
 
+// ============================================================
+// PAGE WRAPPER
+// ============================================================
+//
+// useSearchParams() must be rendered inside a Suspense boundary
+// so that Next.js can build and prerender this route correctly.
+//
+// The actual candidate management logic remains inside
+// CandidatesContent.
+// ============================================================
+
 export default function CandidatesPage() {
+  return (
+    <Suspense
+      fallback={
+        <main
+          style={{
+            minHeight: "100vh",
+            background: "#f3f4f6",
+            padding: "40px 20px",
+          }}
+        >
+          <div
+            style={{
+              maxWidth: "760px",
+              margin: "0 auto",
+            }}
+          >
+            <p
+              style={{
+                color: "#4b5563",
+              }}
+            >
+              Loading candidates...
+            </p>
+          </div>
+        </main>
+      }
+    >
+      <CandidatesContent />
+    </Suspense>
+  );
+}
+
+// ============================================================
+// CANDIDATES CONTENT
+// ============================================================
+//
+// This component contains the actual page logic.
+//
+// Keeping useSearchParams() here ensures that it is rendered
+// inside the Suspense boundary defined above.
+// ============================================================
+
+function CandidatesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -235,7 +289,7 @@ export default function CandidatesPage() {
         }}
       >
         <AtsNavigation />
-        
+
         {/* ====================================================
             PAGE HEADER
             ==================================================== */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
@@ -15,11 +15,24 @@ type Job = {
 };
 
 export default function JobsPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center">
+          <p>Loading jobs...</p>
+        </main>
+      }
+    >
+      <JobsContent />
+    </Suspense>
+  );
+}
+
+function JobsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const managedCustomerId =
-    searchParams.get("customerId");
+  const managedCustomerId = searchParams.get("customerId");
 
   // Stores the jobs loaded from Supabase and the UI request state.
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -44,6 +57,9 @@ export default function JobsPage() {
         .select("id, title, description, created_at")
         .order("created_at", { ascending: false });
 
+      // Admin mode:
+      // When a customerId is present in the URL, only load jobs
+      // associated with the selected customer.
       if (managedCustomerId) {
         jobsQuery = jobsQuery.eq(
           "customer_id",
@@ -51,8 +67,7 @@ export default function JobsPage() {
         );
       }
 
-      const { data, error: jobsError } =
-        await jobsQuery;
+      const { data, error: jobsError } = await jobsQuery;
 
       // Stop the loading process and expose database errors to the UI.
       if (jobsError) {
@@ -84,7 +99,7 @@ export default function JobsPage() {
     <main className="min-h-screen bg-zinc-100 px-4 py-10">
       <div className="mx-auto max-w-4xl">
         <AtsNavigation />
-        
+
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-zinc-900">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -11,6 +11,20 @@ type Job = {
 };
 
 export default function NewCandidatePage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center">
+          <p>Loading...</p>
+        </main>
+      }
+    >
+      <NewCandidateContent />
+    </Suspense>
+  );
+}
+
+function NewCandidateContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
