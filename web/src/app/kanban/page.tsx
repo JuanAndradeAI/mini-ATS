@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 // ============================================================
@@ -41,10 +41,12 @@ type CandidateRelation = {
   email: string | null;
   phone: string | null;
   linkedin_url: string | null;
+  customer_id: string;
 };
 
 type JobRelation = {
   title: string;
+  customer_id: string;
 };
 
 type SupabaseApplicationRow = {
@@ -104,6 +106,11 @@ function formatDate(date: string) {
 
 export default function KanbanPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // When an administrator is managing a customer, the customer ID
+  // is passed through the URL.
+  const customerId = searchParams.get("customerId");
 
   const [applications, setApplications] = useState<KanbanApplication[]>([]);
 
@@ -168,25 +175,42 @@ export default function KanbanPage() {
       // LOAD APPLICATIONS + CANDIDATE + JOB
       // --------------------------------------------------------
 
-      const { data, error: applicationsError } = await supabase
+      let applicationsQuery = supabase
         .from("applications")
         .select(`
           id,
           stage,
           created_at,
-          candidates (
+          candidates!inner (
             id,
             first_name,
             last_name,
             email,
             phone,
-            linkedin_url
+            linkedin_url,
+            customer_id
           ),
-          jobs (
-            title
+          jobs!inner (
+            title,
+            customer_id
           )
         `)
         .order("created_at", { ascending: false });
+
+      // When an administrator is managing a specific customer,
+      // only load applications whose job belongs to that customer.
+      //
+      // For a normal customer session there is no customerId in
+      // the URL, so the existing RLS behavior remains unchanged.
+      if (customerId) {
+        applicationsQuery = applicationsQuery.eq(
+          "jobs.customer_id",
+          customerId
+        );
+      }
+
+      const { data, error: applicationsError } =
+        await applicationsQuery;
 
       // --------------------------------------------------------
       // HANDLE SUPABASE ERROR
@@ -258,7 +282,7 @@ export default function KanbanPage() {
     }
 
     loadApplications();
-  }, [router]);
+  }, [router, customerId]);
 
   // ============================================================
   // JOB FILTER

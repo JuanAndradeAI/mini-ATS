@@ -51,9 +51,9 @@
 - [X] Allow admin to create jobs for customers
 - [X] Allow admin to view customer candidates
 - [X] Allow admin to add candidates
-- [ ] Allow admin to access customer Kanban boards
-- [ ] Allow admin to move candidates between pipeline stages
-- [ ] Allow admin to use job and candidate filters
+- [X] Allow admin to access customer Kanban boards
+- [X] Allow admin to move candidates between pipeline stages
+- [X] Allow admin to use job and candidate filters
 - [ ] Reuse existing Jobs, Candidates and Kanban functionality
 - [ ] Verify admin can manage customer data without duplicating customer workflow code
 
