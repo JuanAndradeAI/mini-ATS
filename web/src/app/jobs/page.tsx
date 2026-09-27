@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
@@ -15,6 +15,10 @@ type Job = {
 
 export default function JobsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const managedCustomerId =
+    searchParams.get("customerId");
 
   // Stores the jobs loaded from Supabase and the UI request state.
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -34,10 +38,20 @@ export default function JobsPage() {
 
       // Load the available jobs, showing the most recently created ones first.
       // Row Level Security (RLS) determines which jobs the current user can access.
-      const { data, error: jobsError } = await supabase
+      let jobsQuery = supabase
         .from("jobs")
         .select("id, title, description, created_at")
         .order("created_at", { ascending: false });
+
+      if (managedCustomerId) {
+        jobsQuery = jobsQuery.eq(
+          "customer_id",
+          managedCustomerId
+        );
+      }
+
+      const { data, error: jobsError } =
+        await jobsQuery;
 
       // Stop the loading process and expose database errors to the UI.
       if (jobsError) {
@@ -54,7 +68,7 @@ export default function JobsPage() {
 
     // Load jobs when the page is initialized.
     loadJobs();
-  }, [router]);
+  }, [router, managedCustomerId]);
 
   // Display a temporary loading state while authentication and data are resolved.
   if (loading) {
@@ -81,7 +95,13 @@ export default function JobsPage() {
 
           {/* Provides navigation to the job creation workflow. */}
           <Link
-            href="/jobs/new"
+            href={
+              managedCustomerId
+                ? `/jobs/new?customerId=${encodeURIComponent(
+                    managedCustomerId
+                  )}`
+                : "/jobs/new"
+            }
             className="rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-700"
           >
             Create job

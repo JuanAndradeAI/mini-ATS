@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
 
 export default function NewJobPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const selectedCustomerId = searchParams.get("customerId");
 
 // Stores the authenticated session and the customer associated with the user.
   const [session, setSession] = useState<Session | null>(null);
@@ -20,11 +22,13 @@ export default function NewJobPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    async function loadUserData() {
-// Check that the user has an active session before allowing access.
+  async function loadUserData() {
+    setLoading(true);
+    setError("");
+
+    // Check that the user has an active session before allowing access.
     const { data: sessionData } = await supabase.auth.getSession();
 
-// Redirect unauthenticated users to the login page.
     if (!sessionData.session) {
       router.replace("/login");
       return;
@@ -32,36 +36,48 @@ export default function NewJobPage() {
 
     setSession(sessionData.session);
 
-// Load the authenticated user's profile to determine which customer
-// the new job should belong to.
+    // Admin mode:
+    // When a customerId is present in the URL, use that customer.
+    if (selectedCustomerId) {
+      setCustomerId(selectedCustomerId);
+      setLoading(false);
+      return;
+    }
+
+    // Customer mode:
+    // Without a customerId in the URL, use the authenticated user's customer.
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("customer_id")
       .eq("id", sessionData.session.user.id)
       .single();
 
-    // Stop the initialization process if the profile cannot be loaded.
     if (profileError) {
-        console.error("Profile error details:", {
+      console.error("Profile error details:", {
         message: profileError.message,
         details: profileError.details,
         hint: profileError.hint,
         code: profileError.code,
         userId: sessionData.session.user.id,
-    });
+      });
 
-    setLoading(false);
-    return;
-}
+      setError(profileError.message);
+      setLoading(false);
+      return;
+    }
 
-    // Store the customer ID so new jobs can be associated with the correct tenant.
+    if (!profile.customer_id) {
+      setError("No customer is associated with this user.");
+      setLoading(false);
+      return;
+    }
+
     setCustomerId(profile.customer_id);
     setLoading(false);
   }
 
-  // Load authentication and customer information when the page is initialized.
   loadUserData();
-}, [router]);
+}, [router, selectedCustomerId]);
 
 // Handles validation and persistence when the job creation form is submitted.
 async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {

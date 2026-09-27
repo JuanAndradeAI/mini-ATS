@@ -8,6 +8,7 @@ import {
 } from "react";
 
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 // ============================================================
 // TYPES
@@ -51,6 +52,8 @@ export default function AdminPage() {
   // ==========================================================
   // NAVIGATION STATE
   // ==========================================================
+
+    const router = useRouter();
 
   // The dashboard opens on the account management view.
   const [view, setView] = useState<AdminView>("accounts");
@@ -249,6 +252,30 @@ export default function AdminPage() {
       window.clearTimeout(timeoutId);
     };
   }, [loadAccounts]);
+
+  // ==========================================================
+  // OPEN CUSTOMER ATS
+  // ==========================================================
+  //
+  // Opens the existing ATS in the context of the customer
+  // selected by the administrator.
+  //
+  // The customer id is passed through the URL so the shared
+  // ATS pages can resolve which customer the admin is managing.
+  // ==========================================================
+
+  function openCustomerAts(account: Account) {
+    if (!account.customerId) {
+      setAccountsError(
+        "This customer account is not associated with a customer."
+      );
+      return;
+    }
+
+    router.push(
+      `/jobs?customerId=${encodeURIComponent(account.customerId)}`
+    );
+  }
 
   // ==========================================================
   // OPEN CREATE CUSTOMER VIEW
@@ -1318,6 +1345,18 @@ export default function AdminPage() {
 
                               <td className="px-4 py-4">
                                 <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => openCustomerAts(account)}
+                                    disabled={
+                                      !account.customerId ||
+                                      deletingAccountId === account.id
+                                    }
+                                    className="rounded-lg bg-zinc-900 px-3 py-2 text-xs font-medium text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    Manage ATS
+                                  </button>
+                                  
                                   <button
                                     type="button"
                                     onClick={() =>
