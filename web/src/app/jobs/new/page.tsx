@@ -1,19 +1,55 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
 
-export default function NewJobPage() {
-  const router = useRouter();
+// ============================================================
+// NEW JOB PAGE
+// ============================================================
+//
+// useSearchParams() must be rendered inside a Suspense boundary
+// so that Next.js can build and prerender this route correctly.
+//
+// The actual job creation logic remains inside NewJobContent.
+// ============================================================
 
-// Stores the authenticated session and the customer associated with the user.
+export default function NewJobPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-zinc-100 px-4">
+          <p className="text-zinc-600">Loading...</p>
+        </main>
+      }
+    >
+      <NewJobContent />
+    </Suspense>
+  );
+}
+
+// ============================================================
+// NEW JOB CONTENT
+// ============================================================
+//
+// This component contains the actual page logic.
+//
+// Keeping useSearchParams() here ensures that it is rendered
+// inside the Suspense boundary defined above.
+// ============================================================
+
+function NewJobContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const selectedCustomerId = searchParams.get("customerId");
+
+  // Stores the authenticated session and the customer associated with the user.
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [customerId, setCustomerId] = useState<string | null>(null);
 
-// Stores the form values and submission state.
+  // Stores the form values and submission state.
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -21,86 +57,108 @@ export default function NewJobPage() {
 
   useEffect(() => {
     async function loadUserData() {
-// Check that the user has an active session before allowing access.
-    const { data: sessionData } = await supabase.auth.getSession();
+      setLoading(true);
+      setError("");
 
-// Redirect unauthenticated users to the login page.
-    if (!sessionData.session) {
-      router.replace("/login");
+      // Check that the user has an active session before allowing access.
+      const { data: sessionData } = await supabase.auth.getSession();
+
+      if (!sessionData.session) {
+        router.replace("/login");
+        return;
+      }
+
+      setSession(sessionData.session);
+
+      // Admin mode:
+      // When a customerId is present in the URL, use that customer.
+      if (selectedCustomerId) {
+        setCustomerId(selectedCustomerId);
+        setLoading(false);
+        return;
+      }
+
+      // Customer mode:
+      // Without a customerId in the URL, use the authenticated user's customer.
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("customer_id")
+        .eq("id", sessionData.session.user.id)
+        .single();
+
+      if (profileError) {
+        console.error("Profile error details:", {
+          message: profileError.message,
+          details: profileError.details,
+          hint: profileError.hint,
+          code: profileError.code,
+          userId: sessionData.session.user.id,
+        });
+
+        setError(profileError.message);
+        setLoading(false);
+        return;
+      }
+
+      if (!profile.customer_id) {
+        setError("No customer is associated with this user.");
+        setLoading(false);
+        return;
+      }
+
+      setCustomerId(profile.customer_id);
+      setLoading(false);
+    }
+
+    loadUserData();
+  }, [router, selectedCustomerId]);
+
+  // Handles validation and persistence when the job creation form is submitted.
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    // Prevent creating a job without an associated customer.
+    if (!customerId) {
+      setError("No customer is associated with this user.");
       return;
     }
 
-    setSession(sessionData.session);
+    setSubmitting(true);
+    setError("");
 
-// Load the authenticated user's profile to determine which customer
-// the new job should belong to.
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("customer_id")
-      .eq("id", sessionData.session.user.id)
-      .single();
+    // Create the job under the current customer's account.
+    // Row Level Security (RLS) provides the database-level authorization check.
+    const { error: insertError } = await supabase
+      .from("jobs")
+      .insert({
+        customer_id: customerId,
+        title: title.trim(),
+        description: description.trim() || null,
+      });
 
-    // Stop the initialization process if the profile cannot be loaded.
-    if (profileError) {
-        console.error("Profile error details:", {
-        message: profileError.message,
-        details: profileError.details,
-        hint: profileError.hint,
-        code: profileError.code,
-        userId: sessionData.session.user.id,
-    });
+    // Keep the form data available and display the database error if creation fails.
+    if (insertError) {
+      console.error("Error creating job:", insertError);
+      setError(insertError.message);
+      setSubmitting(false);
+      return;
+    }
 
-    setLoading(false);
-    return;
-}
+    // Reset the form after the job has been successfully created.
+    setTitle("");
+    setDescription("");
+    setSubmitting(false);
 
-    // Store the customer ID so new jobs can be associated with the correct tenant.
-    setCustomerId(profile.customer_id);
-    setLoading(false);
+    alert("Job created successfully");
   }
 
-  // Load authentication and customer information when the page is initialized.
-  loadUserData();
-}, [router]);
-
-// Handles validation and persistence when the job creation form is submitted.
-async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-  e.preventDefault();
-
-  // Prevent creating a job without an associated customer.
-  if (!customerId) {
-    setError("No customer is associated with this user.");
-    return;
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-zinc-100 px-4">
+        <p className="text-zinc-600">Loading...</p>
+      </main>
+    );
   }
-
-  setSubmitting(true);
-  setError("");
-
-// Create the job under the current customer's account.
-// Row Level Security (RLS) provides the database-level authorization check.
-const { error: insertError } = await supabase
-  .from("jobs")
-  .insert({
-  customer_id: customerId,
-  title: title.trim(),
-  description: description.trim() || null,
-    });
-
-// Keep the form data available and display the database error if creation fails.
-if (insertError) {
-  console.error("Error creating job:", insertError);
-  setError(insertError.message);
-  setSubmitting(false);
-  return;
-  }
-
-  // Reset the form after the job has been successfully created.
-  setTitle("");
-  setDescription("");
-  setSubmitting(false);
-
-  alert("Job created successfully");
-}
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-zinc-100 px-4">
