@@ -1,98 +1,151 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import AtsNavigation from "@/components/AtsNavigation";
+
 // ============================================================
 // CANDIDATES PAGE
 // ============================================================
-// This page displays the candidates that belong to the
-// currently logged-in customer's jobs.
+//
+// This page supports two contexts:
+//
+// 1. Customer:
+//    The authenticated customer sees their own candidates.
+//
+// 2. Administrator:
+//    The administrator can manage a selected customer's
+//    candidates using ?customerId=...
 //
 // Data relationship:
 //
 // candidates -> applications -> jobs
 //
-// We start from "applications" because it connects a candidate
-// with a job and also contains the candidate's pipeline stage.
+// We query applications because it connects the candidate
+// with the job and contains the pipeline stage.
 // ============================================================
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { supabase } from "@/lib/supabase";
-
-
-// ============================================================
-// TYPES
-// ============================================================
-
-// Shape of the candidate data that we will use in the UI.
-//
-// phone and linkedin_url can be null because these fields
-// may not exist for every candidate.
 type Candidate = {
   id: string;
   first_name: string;
   last_name: string;
-  email: string;
+  email: string | null;
   phone: string | null;
   linkedin_url: string | null;
   stage: string;
   job_title: string;
 };
 
-
-// ============================================================
-// PAGE COMPONENT
-// ============================================================
+type ApplicationRow = {
+  stage: string;
+  candidates:
+    | {
+        id: string;
+        first_name: string;
+        last_name: string;
+        email: string | null;
+        phone: string | null;
+        linkedin_url: string | null;
+      }
+    | {
+        id: string;
+        first_name: string;
+        last_name: string;
+        email: string | null;
+        phone: string | null;
+        linkedin_url: string | null;
+      }[]
+    | null;
+  jobs:
+    | {
+        title: string;
+        customer_id: string;
+      }
+    | {
+        title: string;
+        customer_id: string;
+      }[]
+    | null;
+};
 
 export default function CandidatesPage() {
-  // Stores the candidates returned from Supabase.
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Customer selected by an administrator.
+  const selectedCustomerId = searchParams.get("customerId");
+
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-
-  // Controls the loading message while data is being fetched.
   const [loading, setLoading] = useState(true);
-
-  // Stores an error message if the request fails.
   const [error, setError] = useState("");
-
-
-  // ==========================================================
-  // LOAD CANDIDATES
-  // ==========================================================
-  // Runs once when the page loads.
-  //
-  // Instead of querying only the candidates table, we query
-  // applications because an application connects:
-  //
-  // candidate -> application -> job
-  //
-  // It also gives us the pipeline stage such as "applied".
-  // ==========================================================
 
   useEffect(() => {
     async function loadCandidates() {
-      // Start loading and clear any previous error.
       setLoading(true);
       setError("");
 
       // --------------------------------------------------------
-      // Query Supabase
+      // AUTHENTICATION
       // --------------------------------------------------------
+
+      const { data: sessionData } = await supabase.auth.getSession();
+
+      if (!sessionData.session) {
+        router.replace("/login");
+        return;
+      }
+
+      // --------------------------------------------------------
+      // DETERMINE WHICH CUSTOMER WE ARE MANAGING
+      // --------------------------------------------------------
+      //
+      // Admin:
+      // customerId comes from the URL.
+      //
+      // Customer:
+      // customerId comes from their profile.
+      // --------------------------------------------------------
+
+      let activeCustomerId = selectedCustomerId;
+
+      if (!activeCustomerId) {
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("customer_id")
+          .eq("id", sessionData.session.user.id)
+          .single();
+
+        if (profileError) {
+          console.error("Error loading profile:", profileError);
+          setError(profileError.message);
+          setLoading(false);
+          return;
+        }
+
+        if (!profile.customer_id) {
+          setError("No customer is associated with this user.");
+          setLoading(false);
+          return;
+        }
+
+        activeCustomerId = profile.customer_id;
+      }
+
+      // --------------------------------------------------------
+      // LOAD APPLICATIONS
+      // --------------------------------------------------------
+      //
       // We retrieve:
       //
-      // applications.stage
+      // - application stage
+      // - candidate information
+      // - job title
+      // - job customer_id
       //
-      // candidates:
-      // - id
-      // - first_name
-      // - last_name
-      // - email
-      // - phone
-      // - linkedin_url
-      //
-      // jobs:
-      // - title
-      //
-      // Supabase uses the foreign-key relationships between
-      // these tables to return the related records.
+      // The jobs.customer_id filter ensures that only candidates
+      // belonging to the selected customer are displayed.
       // --------------------------------------------------------
 
       const { data, error: queryError } = await supabase
@@ -107,57 +160,42 @@ export default function CandidatesPage() {
             phone,
             linkedin_url
           ),
-          jobs (
-            title
+          jobs!inner (
+            title,
+            customer_id
           )
         `)
+        .eq("jobs.customer_id", activeCustomerId)
         .order("created_at", { ascending: false });
-
-
-      // --------------------------------------------------------
-      // Handle query errors
-      // --------------------------------------------------------
 
       if (queryError) {
         console.error("Error loading candidates:", queryError);
-
         setError(queryError.message);
         setLoading(false);
-
         return;
       }
 
+      // --------------------------------------------------------
+      // TRANSFORM SUPABASE DATA
+      // --------------------------------------------------------
 
-    // --------------------------------------------------------
-    // Transform Supabase data
-    // --------------------------------------------------------
-    // Supabase infers the nested relationships "candidates"
-    // and "jobs" as arrays.
-    //
-    // Because each application belongs to one candidate and
-    // one job, we take the first related record from each array
-    // and convert it into the simpler Candidate structure used
-    // by the UI.
-    // --------------------------------------------------------
+      const formattedCandidates: Candidate[] = (
+        (data ?? []) as ApplicationRow[]
+      ).flatMap((application) => {
+        const candidate = Array.isArray(application.candidates)
+          ? application.candidates[0]
+          : application.candidates;
 
-    const formattedCandidates: Candidate[] = (data ?? []).flatMap(
-    (application) => {
-        // Get the candidate related to this application.
-        const candidate = application.candidates?.[0];
+        const job = Array.isArray(application.jobs)
+          ? application.jobs[0]
+          : application.jobs;
 
-        // Get the job related to this application.
-        const job = application.jobs?.[0];
-
-        // If either relationship is missing, ignore this
-        // incomplete application.
         if (!candidate || !job) {
-        return [];
+          return [];
         }
 
-        // Convert the Supabase result into the Candidate
-        // structure expected by our React state.
         return [
-        {
+          {
             id: candidate.id,
             first_name: candidate.first_name,
             last_name: candidate.last_name,
@@ -166,26 +204,21 @@ export default function CandidatesPage() {
             linkedin_url: candidate.linkedin_url,
             stage: application.stage,
             job_title: job.title,
-        },
+          },
         ];
-    }
-    );
+      });
 
-
-      // Save the candidates in React state.
       setCandidates(formattedCandidates);
-
-      // Data loading has finished.
       setLoading(false);
     }
 
     loadCandidates();
-  }, []);
+  }, [router, selectedCustomerId]);
 
-
-  // ==========================================================
-  // PAGE UI
-  // ==========================================================
+  // Preserve customerId when an administrator creates a candidate.
+  const addCandidateHref = selectedCustomerId
+    ? `/candidates/new?customerId=${encodeURIComponent(selectedCustomerId)}`
+    : "/candidates/new";
 
   return (
     <main
@@ -201,7 +234,8 @@ export default function CandidatesPage() {
           margin: "0 auto",
         }}
       >
-
+        <AtsNavigation />
+        
         {/* ====================================================
             PAGE HEADER
             ==================================================== */}
@@ -235,10 +269,8 @@ export default function CandidatesPage() {
             </p>
           </div>
 
-
-          {/* Link to the Add Candidate page */}
           <Link
-            href="/candidates/new"
+            href={addCandidateHref}
             style={{
               background: "#18181b",
               color: "#ffffff",
@@ -253,7 +285,6 @@ export default function CandidatesPage() {
           </Link>
         </div>
 
-
         {/* ====================================================
             LOADING STATE
             ==================================================== */}
@@ -267,7 +298,6 @@ export default function CandidatesPage() {
             Loading candidates...
           </p>
         )}
-
 
         {/* ====================================================
             ERROR STATE
@@ -287,12 +317,8 @@ export default function CandidatesPage() {
           </div>
         )}
 
-
         {/* ====================================================
             EMPTY STATE
-            ====================================================
-            Displayed when the query works but there are no
-            candidates yet.
             ==================================================== */}
 
         {!loading && !error && candidates.length === 0 && (
@@ -315,7 +341,6 @@ export default function CandidatesPage() {
           </div>
         )}
 
-
         {/* ====================================================
             CANDIDATES LIST
             ==================================================== */}
@@ -330,7 +355,7 @@ export default function CandidatesPage() {
           >
             {candidates.map((candidate) => (
               <div
-                key={candidate.id}
+                key={`${candidate.id}-${candidate.job_title}`}
                 style={{
                   background: "#ffffff",
                   border: "1px solid #e5e7eb",
@@ -339,8 +364,6 @@ export default function CandidatesPage() {
                   boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
                 }}
               >
-
-                {/* Candidate full name */}
                 <h2
                   style={{
                     margin: "0 0 8px",
@@ -350,21 +373,18 @@ export default function CandidatesPage() {
                   {candidate.first_name} {candidate.last_name}
                 </h2>
 
+                {candidate.email && (
+                  <p
+                    style={{
+                      margin: "0 0 6px",
+                      color: "#4b5563",
+                      fontSize: "14px",
+                    }}
+                  >
+                    {candidate.email}
+                  </p>
+                )}
 
-                {/* Candidate email */}
-                <p
-                  style={{
-                    margin: "0 0 6px",
-                    color: "#4b5563",
-                    fontSize: "14px",
-                  }}
-                >
-                  {candidate.email}
-                </p>
-
-
-                {/* Candidate phone
-                    Only displayed if a phone number exists. */}
                 {candidate.phone && (
                   <p
                     style={{
@@ -377,15 +397,6 @@ export default function CandidatesPage() {
                   </p>
                 )}
 
-
-                {/* LinkedIn profile
-                    Only displayed if the candidate has a
-                    LinkedIn URL.
-
-                    target="_blank" opens LinkedIn in a new tab.
-
-                    rel="noopener noreferrer" is recommended
-                    when opening external websites. */}
                 {candidate.linkedin_url && (
                   <a
                     href={candidate.linkedin_url}
@@ -403,8 +414,6 @@ export default function CandidatesPage() {
                   </a>
                 )}
 
-
-                {/* Job and pipeline stage badges */}
                 <div
                   style={{
                     display: "flex",
@@ -412,8 +421,6 @@ export default function CandidatesPage() {
                     flexWrap: "wrap",
                   }}
                 >
-
-                  {/* Job title */}
                   <span
                     style={{
                       background: "#e5e7eb",
@@ -425,8 +432,6 @@ export default function CandidatesPage() {
                     {candidate.job_title}
                   </span>
 
-
-                  {/* Candidate pipeline stage */}
                   <span
                     style={{
                       background: "#e5e7eb",
@@ -438,7 +443,6 @@ export default function CandidatesPage() {
                   >
                     {candidate.stage}
                   </span>
-
                 </div>
               </div>
             ))}

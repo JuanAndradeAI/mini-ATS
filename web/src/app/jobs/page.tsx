@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import AtsNavigation from "@/components/AtsNavigation";
 
 // Defines the structure of a job returned from the database.
 type Job = {
@@ -82,6 +83,8 @@ export default function JobsPage() {
   return (
     <main className="min-h-screen bg-zinc-100 px-4 py-10">
       <div className="mx-auto max-w-4xl">
+        <AtsNavigation />
+        
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-zinc-900">
