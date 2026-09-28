@@ -55,7 +55,6 @@ export default function AdminPage() {
 
   const router = useRouter();
   const [currentAdminName, setCurrentAdminName] = useState("");
-  const [adminAccessChecked, setAdminAccessChecked] = useState(false);
 
   // The dashboard opens on the account management view.
   const [view, setView] = useState<AdminView>("accounts");
@@ -193,7 +192,8 @@ export default function AdminPage() {
       }
 
       if (!session?.access_token) {
-        throw new Error("You must be signed in.");
+        router.replace("/login");
+         return;
       }
 
       const response = await fetch(
@@ -244,7 +244,7 @@ export default function AdminPage() {
     } finally {
       setAccountsLoading(false);
     }
-  }, []);
+  }, [router]);
 
   // ==========================================================
   // INITIAL ACCOUNT LOAD
@@ -431,10 +431,11 @@ export default function AdminPage() {
         (await response.json()) as ApiResponse;
 
       if (!response.ok) {
-        throw new Error(
+        setAccountsError(
           data.error ??
             "Could not delete the account."
         );
+        return;
       }
 
       // Keep the user on the same account category.

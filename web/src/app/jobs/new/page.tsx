@@ -3,7 +3,6 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import type { Session } from "@supabase/supabase-js";
 
 // ============================================================
 // NEW JOB PAGE
@@ -45,7 +44,6 @@ function NewJobContent() {
   const selectedCustomerId = searchParams.get("customerId");
 
   // Stores the authenticated session and the customer associated with the user.
-  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [customerId, setCustomerId] = useState<string | null>(null);
 
@@ -67,8 +65,6 @@ function NewJobContent() {
         router.replace("/login");
         return;
       }
-
-      setSession(sessionData.session);
 
       // Admin mode:
       // When a customerId is present in the URL, use that customer.
@@ -144,12 +140,16 @@ function NewJobContent() {
       return;
     }
 
-    // Reset the form after the job has been successfully created.
-    setTitle("");
-    setDescription("");
-    setSubmitting(false);
+    // Return to the Jobs page after successful creation.
+    // Preserve customerId when an administrator is managing a customer.
+    if (selectedCustomerId) {
+      router.push(
+        `/jobs?customerId=${encodeURIComponent(selectedCustomerId)}`
+      );
+      return;
+    }
 
-    alert("Job created successfully");
+    router.push("/jobs");
   }
 
   if (loading) {
@@ -217,6 +217,22 @@ function NewJobContent() {
             </p>
           )}
 
+          <button
+            type="button"
+            onClick={() => {
+              if (selectedCustomerId) {
+                router.push(
+                  `/jobs?customerId=${encodeURIComponent(selectedCustomerId)}`
+                );
+                return;
+              }
+
+              router.push("/jobs");
+            }}
+            className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-2 font-medium text-zinc-700 hover:bg-zinc-50"
+          >
+            Back to jobs
+          </button>
           {/* Disable repeated submissions while the insert request is in progress. */}
           <button
             type="submit"

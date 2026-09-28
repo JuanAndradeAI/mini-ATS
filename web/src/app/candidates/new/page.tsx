@@ -370,6 +370,23 @@ function NewCandidateContent() {
           )}
 
           <button
+            type="button"
+            onClick={() => {
+              if (selectedCustomerId) {
+                router.push(
+                  `/candidates?customerId=${encodeURIComponent(selectedCustomerId)}`
+                );
+                return;
+              }
+
+              router.push("/candidates");
+            }}
+            className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-2 font-medium text-zinc-700 hover:bg-zinc-50"
+          >
+            Back to candidates
+          </button>
+
+          <button
             type="submit"
             disabled={submitting || jobs.length === 0}
             className="w-full rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
