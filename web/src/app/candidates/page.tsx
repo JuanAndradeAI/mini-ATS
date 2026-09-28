@@ -308,6 +308,7 @@ function CandidatesContent() {
               style={{
                 margin: "0 0 8px",
                 fontSize: "28px",
+                fontWeight: 700,
               }}
             >
               Candidates

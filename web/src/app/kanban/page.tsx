@@ -594,7 +594,7 @@ function KanbanContent() {
 
         <div>
           <h1 className="text-3xl font-bold text-zinc-900">
-            Candidate Pipeline
+            Hiring process
           </h1>
 
           <p className="mt-2 text-zinc-600">

@@ -93,7 +93,7 @@ export default function AtsNavigation() {
           href={buildHref("/kanban")}
           className="rounded-lg bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-200"
         >
-          Kanban
+          Hiring process
         </Link>
 
         {userInfo && (
@@ -104,7 +104,7 @@ export default function AtsNavigation() {
 
             <p className="text-xs text-zinc-500">
               {userInfo.role === "admin"
-                ? "Administrator"
+                ? "Admin"
                 : "Customer"}
             </p>
           </div>

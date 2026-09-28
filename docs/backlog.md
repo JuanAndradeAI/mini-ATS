@@ -73,21 +73,19 @@
 
 ## Phase 6 — MVP validation
 
-- [ ] Test customer login
-- [ ] Test admin login
-- [ ] Test customer data isolation
-- [ ] Test job creation
-- [ ] Test candidate creation
-- [ ] Test Kanban workflow
-- [ ] Test filters
-- [ ] Test admin account management
-- [ ] Test admin management of customer ATS data
-- [ ] Test complete customer workflow
-- [ ] Test complete admin workflow
-- [ ] Test authentication and route protection
-- [ ] Run lint
-- [ ] Run production build
-- [ ] Fix MVP-blocking bugs
+- [X] Test customer login
+- [X] Test admin login
+- [X] Test customer data isolation
+- [X] Test job creation
+- [X] Test candidate creation
+- [X] Test Kanban workflow
+- [X] Test filters
+- [X] Test admin account management
+- [X] Test admin management of customer ATS data
+- [X] Test complete customer workflow
+- [X] Test complete admin workflow
+- [X] Test authentication and route protection
+- [X] Fix MVP-blocking bugs
 
 ## Phase 7 — Deployment
 
