@@ -53,7 +53,9 @@ export default function AdminPage() {
   // NAVIGATION STATE
   // ==========================================================
 
-    const router = useRouter();
+  const router = useRouter();
+  const [currentAdminName, setCurrentAdminName] = useState("");
+  const [adminAccessChecked, setAdminAccessChecked] = useState(false);
 
   // The dashboard opens on the account management view.
   const [view, setView] = useState<AdminView>("accounts");
@@ -210,6 +212,11 @@ export default function AdminPage() {
         | { error?: string };
 
       if (!response.ok) {
+        if (response.status === 403) {
+          router.replace("/jobs");
+          return;
+        }
+
         throw new Error(
           "error" in data && data.error
             ? data.error
@@ -252,6 +259,55 @@ export default function AdminPage() {
       window.clearTimeout(timeoutId);
     };
   }, [loadAccounts]);
+  async function handleLogout() {
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    console.error("Error signing out:", error);
+    return;
+  }
+
+  router.replace("/login");
+  router.refresh();
+  }
+  // ==========================================================
+  // LOAD CURRENT ADMIN
+  // ==========================================================
+
+  useEffect(() => {
+    async function loadCurrentAdmin() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        router.replace("/login");
+        return;
+      }
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("full_name, role")
+        .eq("id", session.user.id)
+        .single();
+
+      if (error) {
+        console.error("Error loading current admin:", error);
+        return;
+      }
+
+      if (profile.role !== "admin") {
+        router.replace("/jobs");
+        return;
+      }
+
+      setCurrentAdminName(
+        profile?.full_name || session.user.email || "Administrator"
+      );
+    }
+
+    void loadCurrentAdmin();
+  }, [router]);
 
   // ==========================================================
   // OPEN CUSTOMER ATS
@@ -1177,22 +1233,46 @@ export default function AdminPage() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
-              onClick={openCreateCustomer}
-              className="rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-700"
-            >
-              + Create customer
-            </button>
+          <div className="flex flex-col gap-4 sm:items-end">
+            {/* Displays the currently authenticated administrator. */}
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-sm font-medium text-zinc-900">
+                  {currentAdminName || "Administrator"}
+                </p>
 
-            <button
-              type="button"
-              onClick={openCreateAdmin}
-              className="rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
-            >
-              + Create administrator
-            </button>
+                <p className="text-xs text-zinc-500">
+                  Admin
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
+              >
+                Log out
+              </button>
+            </div>
+
+            {/* Administrative account creation actions. */}
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={openCreateCustomer}
+                className="rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-700"
+              >
+                + Create customer
+              </button>
+
+              <button
+                type="button"
+                onClick={openCreateAdmin}
+                className="rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+              >
+                + Create administrator
+              </button>
+            </div>
           </div>
         </div>
 

@@ -70,12 +70,27 @@ async function verifyAdmin(request: NextRequest) {
     };
   }
 
+  // TEMPORARY DEBUG:
+  // Shows which authenticated Supabase user reached this API.
+  console.log(
+    "VERIFY ADMIN USER:",
+    user.id,
+    user.email
+  );
+
   const { data: profile, error: profileError } =
     await supabaseAdmin
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .single();
+
+  // TEMPORARY DEBUG:
+  // Shows which application role was found for that user.
+  console.log(
+    "VERIFY ADMIN PROFILE:",
+    profile
+  );
 
   if (profileError) {
     console.error(
