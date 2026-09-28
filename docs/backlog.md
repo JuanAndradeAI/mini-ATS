@@ -59,17 +59,17 @@
 
 ## Phase 5 — Application integration
 
-- [ ] Define authenticated application layout
-- [ ] Connect login to the appropriate application area based on role
-- [ ] Add customer navigation
-- [ ] Add admin navigation
-- [ ] Connect Jobs, Candidates and Kanban into the authenticated application
-- [ ] Connect Admin Dashboard into the authenticated application
-- [ ] Add route protection by authentication state
-- [ ] Add route protection by role
-- [ ] Verify logout returns user to login
-- [ ] Verify complete customer navigation
-- [ ] Verify complete admin navigation
+- [X] Define authenticated application layout
+- [X] Connect login to the appropriate application area based on role
+- [X] Add customer navigation
+- [X] Add admin navigation
+- [X] Connect Jobs, Candidates and Kanban into the authenticated application
+- [X] Connect Admin Dashboard into the authenticated application
+- [X] Add route protection by authentication state
+- [X] Add route protection by role
+- [X] Verify logout returns user to login
+- [X] Verify complete customer navigation
+- [X] Verify complete admin navigation
 
 ## Phase 6 — MVP validation
 
