@@ -718,7 +718,7 @@ function KanbanContent() {
 
         {!error && (
           <div className="mt-6 overflow-x-auto pb-4">
-            <div className="grid grid-cols-6 gap-4">
+            <div className="grid min-w-[1500px] grid-cols-6 gap-4">
 
               {kanbanColumns.map((column) => {
                 // IMPORTANT:
@@ -757,7 +757,7 @@ function KanbanContent() {
                         column.id
                       )
                     }
-                    className={`min-w-0 rounded-xl p-4 transition-all duration-150 ${
+                    className={`min-w-[230px] rounded-xl p-4 transition-all duration-150 ${
                       isDragOver
                         ? "bg-zinc-300 ring-2 ring-zinc-400 ring-offset-2"
                         : "bg-zinc-200"
