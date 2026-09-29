@@ -717,7 +717,7 @@ function KanbanContent() {
         ==================================================== */}
 
         {!error && (
-          <div className="mt-6 w-full overflow-x-auto pb-4">
+          <div className="mt-6 w-full overflow-x-auto overscroll-x-contain pb-4">
             <div className="flex w-max gap-4">
 
               {kanbanColumns.map((column) => {
