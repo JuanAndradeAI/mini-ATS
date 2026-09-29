@@ -757,7 +757,7 @@ function KanbanContent() {
                         column.id
                       )
                     }
-                    className={`w-[280px] shrink-0 rounded-xl p-4 transition-all duration-150 ${
+                    className={`w-[280px] min-w-[280px] flex-none rounded-xl p-4 transition-all duration-150 ${
                       isDragOver
                         ? "bg-zinc-300 ring-2 ring-zinc-400 ring-offset-2"
                         : "bg-zinc-200"
