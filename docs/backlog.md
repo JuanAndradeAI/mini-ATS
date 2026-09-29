@@ -101,11 +101,17 @@
 
 ## Optional — AI extension
 
-- [ ] Define minimal CV assessment approach
+- [X] Define minimal CV assessment approach
+- [X] Document the proposed AI architecture
 - [ ] Implement AI-assisted CV assessment if time allows
-- [ ] Document the proposed AI architecture
 
 ## MVP improvements
+
+### UI / Responsive
+
+- [X] Improve Kanban responsive layout on mobile devices.
+- [X] Enable horizontal scrolling for Kanban columns on small screens.
+- [X] Improve candidate text visibility on mobile devices.
 
 ### Jobs
 
@@ -128,12 +134,6 @@
 
 - [ ] Consider allowing the initial candidate stage to be selected during creation.
 - [ ] Keep "Applied" as the default stage when no stage is selected.
-
-### UI / Responsive
-
-- [X] Improve Kanban responsive layout on mobile devices.
-- [X] Enable horizontal scrolling for Kanban columns on small screens.
-- [X] Improve candidate text visibility on mobile devices.
 
 ### Account management
 
