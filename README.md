@@ -16,8 +16,6 @@ The project focuses on the core functionality of an ATS while keeping the archit
 The core MVP has been implemented, validated, and deployed to production.
 
 Development progress and future improvements are tracked in [`docs/backlog.md`](docs/backlog.md).
-<<<<<<< HEAD
-=======
 
 ## Live Demo
 
@@ -26,7 +24,6 @@ The application is deployed and available at:
 **Live Application:** https://mini-ats-three-henna.vercel.app/
 
 Admin login credentials are provided separately.
->>>>>>> 177c26d (docs: add live demo link)
 
 ## Tech Stack
 
