@@ -89,29 +89,52 @@
 
 ## Phase 7 — Deployment
 
-- [ ] Deploy application
-- [ ] Configure production environment variables
-- [ ] Configure production Supabase settings
-- [ ] Test production authentication
-- [ ] Test deployed customer workflow
-- [ ] Test deployed admin workflow
-- [ ] Create demo admin account
-- [ ] Create demo customer account
-- [ ] Verify production build and CI
-
-## Phase 8 — Delivery
-
-- [ ] Complete README
-- [ ] Document setup instructions
-- [ ] Document assumptions
-- [ ] Prepare demo data
-- [ ] Record 5-minute demo
-- [ ] Share live application
-- [ ] Share admin credentials
-- [ ] Share GitHub repository
+- [X] Deploy application
+- [X] Configure production environment variables
+- [X] Configure production Supabase settings
+- [X] Test production authentication
+- [X] Test deployed customer workflow
+- [X] Test deployed admin workflow
+- [X] Create demo admin account
+- [X] Create demo customer account
+- [X] Verify production build and CI
 
 ## Optional — AI extension
 
 - [ ] Define minimal CV assessment approach
 - [ ] Implement AI-assisted CV assessment if time allows
 - [ ] Document the proposed AI architecture
+
+## MVP improvements
+
+### Jobs
+
+- [ ] Add Edit action to Jobs.
+- [ ] Add Delete action to Jobs.
+- [ ] Allow customers to edit and delete their own Jobs.
+- [ ] Allow administrators to edit and delete Jobs while managing a customer's ATS.
+- [ ] Define what happens to associated Candidates when a Job is deleted.
+
+### Candidates
+
+- [ ] Add Edit action to Candidates.
+- [ ] Add Delete action to Candidates.
+- [ ] Allow customers to edit and delete their own Candidates.
+- [ ] Allow administrators to edit and delete Candidates while managing a customer's ATS.
+- [ ] Add a notes field to candidate profiles.
+- [ ] Allow administrators/customers to add and edit candidate notes.
+
+### Hiring process
+
+- [ ] Consider allowing the initial candidate stage to be selected during creation.
+- [ ] Keep "Applied" as the default stage when no stage is selected.
+
+### UI / Responsive
+
+- [X] Improve Kanban responsive layout on mobile devices.
+- [X] Enable horizontal scrolling for Kanban columns on small screens.
+- [X] Improve candidate text visibility on mobile devices.
+
+### Account management
+
+- [ ] Allow users to change their password.
