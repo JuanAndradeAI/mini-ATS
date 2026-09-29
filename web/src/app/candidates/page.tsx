@@ -309,6 +309,7 @@ function CandidatesContent() {
                 margin: "0 0 8px",
                 fontSize: "28px",
                 fontWeight: 700,
+                color: "#18181b",
               }}
             >
               Candidates
@@ -423,6 +424,7 @@ function CandidatesContent() {
                   style={{
                     margin: "0 0 8px",
                     fontSize: "18px",
+                    color: "#18181b",
                   }}
                 >
                   {candidate.first_name} {candidate.last_name}
@@ -479,6 +481,7 @@ function CandidatesContent() {
                   <span
                     style={{
                       background: "#e5e7eb",
+                      color: "#18181b",
                       padding: "4px 8px",
                       borderRadius: "4px",
                       fontSize: "12px",
@@ -490,6 +493,7 @@ function CandidatesContent() {
                   <span
                     style={{
                       background: "#e5e7eb",
+                      color: "#18181b",
                       padding: "4px 8px",
                       borderRadius: "4px",
                       fontSize: "12px",
